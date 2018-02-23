@@ -1,0 +1,70 @@
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: mssql
+  namespace: production
+  labels:
+    db: mssql-nfs
+spec:
+  serviceName: mssql-prod
+  replicas: 1 
+  template:
+    metadata: 
+      labels: 
+        db: mssql-nfs
+    spec: 
+      containers:
+        - image: microsoft/mssql-server-linux:latest
+          name: mssql
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: SA_PASSWORD
+              value: "SqlDevOps2017"
+            - name: MSSQL_PID
+              value: "Developer"
+          volumeMounts:
+            - mountPath: /var/opt/mssql
+              name: data 
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: 
+        - ReadWriteOnce
+      storageClassName: managed-nfs-storage
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: mssql-prod
+  namespace: production
+spec:
+  selector:
+    db: mssql-nfs
+  ports:
+    - protocol: TCP
+      port: 1433
+      targetPort: 1433
+      nodePort: 31432
+  type: NodePort
+  
+---
+kind: Pod
+apiVersion: v1 
+metadata:
+  name: sqltools
+  namespace: production
+  labels:
+    app: sqltools
+spec:
+  containers:
+    - image: ericskang/sqltools:sqlcmd
+      name: sqltools

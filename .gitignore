@@ -1,0 +1,9 @@
+web_app/node_modules
+db/bin
+db/obj
+/db_tests/WideWorldImporters/debug
+nul
+/test_runner/node_modules
+*.bak
+*.deb
+*.swp
